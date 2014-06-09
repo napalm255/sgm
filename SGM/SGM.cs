@@ -242,7 +242,7 @@ namespace Mgmt.SGM
                     {
                         while (dbReader.Read())
                         {
-                            theMembers[2] += "+" + dbReader[1].ToString() + ";";
+                            theMembers[2] += dbReader[1].ToString() + ";";
                         }
                         dbReader.Close();
                         dbReader.Dispose();
@@ -348,23 +348,23 @@ namespace Mgmt.SGM
                 // Look up group
                 try
                 {
-                    string[] qGroup = getGroupEntry(oGroup);
-                    if (qGroup == null)
+                    string[] qGroup = getGroupEntry(oGroup); /*returns unparsed sql entry*/
+                    if (qGroup == null) //first time
                     {
-                        string[] gMem = getGroupMembers(oGroup);
+                        string[] gMem = getGroupMembers(oGroup); //returns group members from AD, in a [samaccountname];... format
                         UpdateDatabase(gMem[0], gMem[2]);
                         gMem = null;
                     }
                     else
                     {
-                        rMembers = qGroup[1];
-                        string[] gMem = getGroupMembers(oGroup);
+                        rMembers = qGroup[1];//removed members contains all current members from sql
+                        string[] gMem = getGroupMembers(oGroup); //retrieve membership from AD
                         string[] groupMembers = gMem[2].Split(';');
-                        foreach (string member in groupMembers)
+                        foreach (string member in groupMembers) //+[membername]
                         {
-                            if ( (member != "") && (rMembers.Contains("+" + member + ";")) )
+                            if ( (member != "") && (rMembers.Contains(member + ";")) )
                             {
-                                rMembers = rMembers.Replace("+" + member + ";", "");
+                                rMembers = rMembers.Replace(member + ";", "");
                             }
                             else if (member != "")
                             {
@@ -372,7 +372,7 @@ namespace Mgmt.SGM
                             }
                         }
 
-                        if (nMembers != "" || rMembers != "")
+                        if (nMembers != "" || rMembers != "") //if change
                         {
                             UpdateDatabase(gMem[0], gMem[2], nMembers, rMembers);
                             nMembers = nMembers.Replace("&#39;", "'");
@@ -442,7 +442,7 @@ namespace Mgmt.SGM
                             }
                             else
                             {
-                                theMembers[2] += gpMemberEntry.Properties["samAccountName"].Value.ToString().Replace("'","&#39;") + ";";
+                                theMembers[2] += "+" + gpMemberEntry.Properties["samAccountName"].Value.ToString().Replace("'","&#39;") + ";";
                             }
                         }
                         catch
