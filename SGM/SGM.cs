@@ -242,7 +242,7 @@ namespace Mgmt.SGM
                     {
                         while (dbReader.Read())
                         {
-                            theMembers[2] += dbReader[1].ToString() + ";";
+                            theMembers[2] += "+" + dbReader[1].ToString() + ";";
                         }
                         dbReader.Close();
                         dbReader.Dispose();
@@ -362,9 +362,9 @@ namespace Mgmt.SGM
                         string[] groupMembers = gMem[2].Split(';');
                         foreach (string member in groupMembers)
                         {
-                            if ( (member != "") && (rMembers.Contains(member + ";")) )
+                            if ( (member != "") && (rMembers.Contains("+" + member + ";")) )
                             {
-                                rMembers = rMembers.Replace(member + ";", "");
+                                rMembers = rMembers.Replace("+" + member + ";", "");
                             }
                             else if (member != "")
                             {
@@ -378,7 +378,7 @@ namespace Mgmt.SGM
                             nMembers = nMembers.Replace("&#39;", "'");
                             rMembers = rMembers.Replace("&#39;", "'");
                             gMem[2] = gMem[2].Replace("&#39;", "'");
-                            SendMail(gMem[1], gMem[0], nMembers.Replace(";", "<br>"), rMembers.Replace(";", "<br>"), gMem[2].Replace(";", "<br>"));
+                            SendMail(gMem[1], gMem[0], nMembers.Replace(";", "<br>").Replace("+", ""), rMembers.Replace(";", "<br>").Replace("+", ""), gMem[2].Replace(";", "<br>").Replace("+", ""));
                         }
                         nMembers = null;
                         rMembers = null;
