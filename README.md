@@ -1,5 +1,4 @@
-###SGM
-####(Special Group Monitor)
+###SGM (Special Group Monitor)
 
  Open "SGM.exe.config" and edit the databaseConnectionString replacing "SERVERNAME", "DATABASE_NAME", "DATABASE_USER" and "DATABASE_PASSWORD"
 
