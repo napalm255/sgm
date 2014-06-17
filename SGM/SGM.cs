@@ -609,10 +609,11 @@ namespace Mgmt.SGM
             catch { /* DEBUG */ }
         }
 
-        private ArrayList LoadAlertStaff()
+        private ArrayList LoadAlertStaff(string strDN)
         {
             // Define Variables
             ArrayList iAlertStaff = new ArrayList();
+            bool emailoverride = false;
 
             // Load Alert Staff from Database
             try
@@ -622,20 +623,44 @@ namespace Mgmt.SGM
                     // Open Database Connection
                     dbConn.Open();
 
-                    // Load Settings
-                    SqlCommand sCmd = new SqlCommand("SELECT * FROM sgmAlertStaff WHERE aEnabled = 1", dbConn);
-                    using (SqlDataReader dbReader = sCmd.ExecuteReader())
+                    //test for override email To
+                    SqlCommand sCmdoverride = new SqlCommand("SELECT * FROM sgmMonitor", dbConn);
+                    using (SqlDataReader dbReader = sCmdoverride.ExecuteReader())
                     {
                         while (dbReader.Read())
                         {
-                            iAlertStaff.Add(dbReader["aEmail"].ToString());
+                            //EventLog.WriteEntry("SGM", "Debug alertstaff: comparing (" + strDN + ") and (" + dbReader["sObject"].ToString() + ")", EventLogEntryType.Information);
+                            if (dbReader["sOverrideEmailTo"].ToString() != null && dbReader["sObject"].ToString() == strDN)
+                            {
+                                iAlertStaff.Add(dbReader["sOverrideEmailTo"].ToString());
+                                emailoverride = true;
+                                EventLog.WriteEntry("SGM", "Debug alertstaff: found override email (" + dbReader["sOverrideEmailTo"].ToString() + ")", EventLogEntryType.Information);
+                            }
                         }
                         dbReader.Close();
                         dbReader.Dispose();
                     }
-                    sCmd.Dispose();
-                    sCmd = null;
+                    sCmdoverride.Dispose();
+                    sCmdoverride = null;
 
+                    // Load Settings
+                    if (!emailoverride)
+                    {
+                        SqlCommand sCmd = new SqlCommand("SELECT * FROM sgmAlertStaff WHERE aEnabled = 1", dbConn);
+                        using (SqlDataReader dbReader = sCmd.ExecuteReader())
+                        {
+                            while (dbReader.Read())
+                            {
+                                iAlertStaff.Add(dbReader["aEmail"].ToString());
+                            }
+                            dbReader.Close();
+                            dbReader.Dispose();
+                        }
+                        sCmd.Dispose();
+                        sCmd = null;
+
+                       
+                    }
                     // Close Database Connection
                     dbConn.Close();
                 }
@@ -643,17 +668,19 @@ namespace Mgmt.SGM
             catch { /* DEBUG */ }
             
             // Load Alert Staff from AlertGroup
-            try
+            if (!emailoverride)
             {
-                StringCollection groupMembers = this.GetEmailAddresses(iSettings["alertgroup"]);
-                foreach (string strMember in groupMembers)
+                try
                 {
-                    iAlertStaff.Add(strMember);
+                    StringCollection groupMembers = this.GetEmailAddresses(iSettings["alertgroup"]);
+                    foreach (string strMember in groupMembers)
+                    {
+                        iAlertStaff.Add(strMember);
+                    }
+                    groupMembers = null;
                 }
-                groupMembers = null;
+                catch { /* DEBUG */ }
             }
-            catch { /* DEBUG */ }
-
             return iAlertStaff;
         }
 
@@ -713,7 +740,7 @@ namespace Mgmt.SGM
             using (MailMessage mailMsg = new MailMessage())
             {
                 // Load Alert Staff
-                ArrayList iTo = LoadAlertStaff();
+                ArrayList iTo = LoadAlertStaff(strDN);
 
                 // Configure Mail Message
                 try
